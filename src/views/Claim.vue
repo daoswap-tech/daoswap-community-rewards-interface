@@ -20,9 +20,10 @@
                   </v-col>
                 </v-row>
               </v-card-text>
-              <v-divider></v-divider>
+              <v-divider v-if="state.assets.rewardsBalance > 0"></v-divider>
               <v-card-actions class="justify-center">
                 <v-btn
+                  v-if="state.assets.rewardsBalance > 0"
                   large
                   color="primary"
                   dark
@@ -122,12 +123,11 @@
 import { validationMixin } from "vuelidate";
 import { required, decimal } from "vuelidate/lib/validators";
 import clip from "@/utils/clipboard";
-
 import Web3 from "web3";
 import Web3Modal from "web3modal";
 import WalletConnectProvider from "@walletconnect/web3-provider";
 import { getChainData } from "@/utils/utilities";
-import { getContract, formatAmount } from "@/utils/contract";
+import { getContract, formatAmountForString } from "@/utils/contract";
 import { CHAIN_ID, NETWORK_ID } from "@/constants";
 
 const initStats = {
@@ -241,15 +241,13 @@ export default {
       const { web3, address } = this.state;
       this.state.fetching = true;
       try {
-        const ERC20Contract = await getContract("ERC20", web3);
-        const ERC20Balance = await ERC20Contract.balanceOf(address);
-
         const ClaimContract = await getContract("Claim", web3);
-        const rewardsData = await ClaimContract.rewardsInfoByToken(address);
+        const rewardsData = await ClaimContract.methods
+          .rewardsInfoByToken(address)
+          .call();
 
         const assets = {
-          ERC20Balance: formatAmount(ERC20Balance),
-          rewardsBalance: formatAmount(rewardsData.rewardsAmount)
+          rewardsBalance: formatAmountForString(rewardsData.rewardsAmount)
         };
 
         const assetsState = {
@@ -338,21 +336,15 @@ export default {
         );
         // 执行合约
         getContract("Claim", web3)
-          .then(instance => {
-            instance
-              .claim(claimAmount, { from: address })
-              .then(() => {
-                this.state.fetching = false;
-                this.getAccountAssets();
-              })
-              .catch(e => {
-                this.state.fetching = false;
-                console.info(e);
-              });
+          .methods.claim(claimAmount)
+          .send({ from: address })
+          .then(() => {
+            this.state.fetching = false;
+            this.getAccountAssets();
           })
           .catch(e => {
-            console.info(e);
             this.state.fetching = false;
+            console.info(e);
           });
       }
     }
