@@ -1,10 +1,6 @@
-import ERC20_CONTRACT from "./contracts/ERC20FixedSupply.json";
 import CLAIM_CONTRACT from "./contracts/CommunityRewards.json";
 
-export { ERC20_CONTRACT, CLAIM_CONTRACT };
-
-export const ERC20ContractAddress =
-  "0x7Ef5ac1FE8B6832EbAddEE1856E4A21E46843565";
+export { CLAIM_CONTRACT };
 
 export const ClaimContractAddress =
   "0x8CbdAE985c7887f7747e43A4857e388e5189f4cE";
